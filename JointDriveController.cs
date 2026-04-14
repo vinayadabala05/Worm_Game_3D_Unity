@@ -54,13 +54,13 @@ namespace WormGame
             currentZNormalizedRot = z;
 
             // Map from [-1, 1] to the actual joint angle limits
-            var xRot = x * joint.angularXMotion != ConfigurableJointMotion.Locked
+            var xRot = joint.angularXMotion != ConfigurableJointMotion.Locked
                 ? Mathf.Lerp(joint.lowAngularXLimit.limit, joint.highAngularXLimit.limit, (x + 1f) / 2f)
                 : 0f;
-            var yRot = y * joint.angularYMotion != ConfigurableJointMotion.Locked
+            var yRot = joint.angularYMotion != ConfigurableJointMotion.Locked
                 ? Mathf.Lerp(-joint.angularYLimit.limit, joint.angularYLimit.limit, (y + 1f) / 2f)
                 : 0f;
-            var zRot = z * joint.angularZMotion != ConfigurableJointMotion.Locked
+            var zRot = joint.angularZMotion != ConfigurableJointMotion.Locked
                 ? Mathf.Lerp(-joint.angularZLimit.limit, joint.angularZLimit.limit, (z + 1f) / 2f)
                 : 0f;
 

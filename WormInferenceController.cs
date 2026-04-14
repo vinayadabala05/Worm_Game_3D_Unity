@@ -1,70 +1,68 @@
 using UnityEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Policies;
-using Unity.Barracuda;
 
 namespace WormGame
 {
     /// <summary>
     /// Inference controller that runs the trained model on worm agents.
     /// 
-    /// When a trained model (.onnx) is available, this script:
-    ///   1. Loads the model and assigns it to all agents
-    ///   2. Switches agents from training mode to inference mode
-    ///   3. The agents then play autonomously using the learned policy
-    /// 
-    /// Attach this to the same GameObject as WormEnvironmentSetup
-    /// or to any persistent GameObject in the scene.
-    /// 
-    /// To use:
-    ///   1. After training, find the .onnx model in results/<run-id>/Worm.onnx
+    /// After training is complete:
+    ///   1. Find the .onnx model in results/<run-id>/Worm.onnx
     ///   2. Import the .onnx file into Unity (Assets folder)
-    ///   3. Assign it to the NNModel field on this component
-    ///   4. Press Play - agents will run autonomously!
+    ///   3. Select each WormAgent in Hierarchy
+    ///   4. In Behavior Parameters, drag the .onnx to the "Model" field
+    ///   5. Set "Behavior Type" to "Inference Only"
+    ///   6. Press Play - agents will run autonomously!
+    /// 
+    /// Alternatively, attach this script to a GameObject and assign the model
+    /// to apply it to all agents automatically.
     /// </summary>
     public class WormInferenceController : MonoBehaviour
     {
-        [Header("Trained Model")]
-        [Tooltip("Assign the trained .onnx model file here")]
-        public NNModel trainedModel;
-
         [Header("Inference Settings")]
         [Tooltip("Run in deterministic mode (no exploration noise)")]
         public bool deterministicInference = true;
 
         void Start()
         {
-            if (trainedModel == null)
-            {
-                Debug.LogWarning(
-                    "[WormInference] No trained model assigned! " +
-                    "Agents will use default (random) behavior. " +
-                    "Train a model first, then assign the .onnx file.");
-                return;
-            }
-
             // Find all worm agents in the scene
             var agents = FindObjectsOfType<WormAgent>();
 
+            if (agents.Length == 0)
+            {
+                Debug.LogWarning("[WormInference] No WormAgent instances found in scene.");
+                return;
+            }
+
+            int configuredCount = 0;
             foreach (var agent in agents)
             {
                 var behaviorParams = agent.GetComponent<BehaviorParameters>();
-                if (behaviorParams != null)
+                if (behaviorParams != null && behaviorParams.Model != null)
                 {
-                    // Assign the trained model
-                    behaviorParams.Model = trainedModel;
-
-                    // Set to inference mode
+                    // Set to inference mode if a model is assigned
                     behaviorParams.BehaviorType = BehaviorType.InferenceOnly;
+                    configuredCount++;
 
                     Debug.Log(
-                        $"[WormInference] Loaded model for agent: {agent.name}");
+                        $"[WormInference] Agent '{agent.name}' set to inference mode " +
+                        $"with model: {behaviorParams.Model.name}");
                 }
             }
 
-            Debug.Log(
-                $"[WormInference] {agents.Length} agents now running autonomously " +
-                $"with trained model: {trainedModel.name}");
+            if (configuredCount > 0)
+            {
+                Debug.Log(
+                    $"[WormInference] {configuredCount}/{agents.Length} agents " +
+                    $"now running autonomously!");
+            }
+            else
+            {
+                Debug.LogWarning(
+                    "[WormInference] No agents have a trained model assigned. " +
+                    "Please assign .onnx model to each agent's Behavior Parameters → Model field.");
+            }
         }
     }
 }
